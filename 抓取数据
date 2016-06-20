@@ -1,0 +1,29 @@
+getUrl<-function(year,prov,item){
+urlT=paste0("http://202.127.42.157/moazzys/huafei_result.aspx?year=",year,#input year
+"&prov=",prov,#input province code (sep by ",")
+"&item=",item,#input item code (sep by ",")
+"&type=1&radio=1&order1=year_code&order2=prov_code&order3=item_code")
+return(urlT)}
+year=paste0(1949:2015,collapse=",")
+prov="00,11,12,13,14,15,21,22,23,31,32,33,34,35,36,37,41,42,43,44,45,46,49,51,52,53,54,61,62,63,64,65"
+item="1,2,3,4,5,6,7,8,9,10,11,12,13,14"
+urlT=getUrl(year,prov,item)
+google <- read_html(urlT) %>%
+html_nodes(xpath = "//span[@id='ContentPlaceHolder1_lbldata']") 
+years<-html_nodes(google,"b")%>%html_nodes("font")%>%html_text()#years
+charts=html_nodes(google,"tr")%>%html_nodes("table")%>%html_nodes("table")%>%html_table(fill=T,header=T)
+names<-html_nodes(google,"tr")%>%html_nodes("table")%>%html_nodes("b")%>%html_text()
+names(charts)<-names
+#
+temp=data.frame()
+res=data.frame()
+for (j in 1:length(charts)){
+    temp=cbind(charts[[j]],names(charts[j]))
+    res<-rbind(temp,res)}
+    
+colnames(res)<-c("type","quantity","none","place")
+res<-res[,-3]
+
+res<-subset(res,res$type!="")
+a=length(unique(res$type))*length(unique(res$place))
+res$year=rev(rep(years[1]:years[length(years)],1,each = a))
